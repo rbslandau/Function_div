@@ -10,7 +10,7 @@ Scripts written by Katharina Voß and Ralf B. Schäfer
 
 diversities.csv:				*Several diversity indices and relative abundance of trait modalities*  
 
-ECOLIND\_6908\_script.R			 *Provides the R code to run the analyses and to plot the results.*  
+ECOLIND\_6908\_script.R:			 *Provides the R code to run the analyses and to plot the results.*  
 
 ID_abundance.csv:				*Abundance of species in sites*   
 
@@ -18,7 +18,7 @@ ID_traits.csv:				*Affinity scores for trait modalities of taxa found in study*
 
 inv\_taxa\_rda.csv:		*Taxonomic information for RDA*  
 
-README.txt			*Details on data sets*  
+README.txt:			*Details on data sets*  
 
 variables_final.csv:				*Environmental data*  
 
