@@ -29,6 +29,8 @@
 # Fig.1 and Fig.2 from the article ----------------------------------> from line 384 - 444
 # Fig. S1 and S2 from Supplementary Informations---------------------> from line 444 - 466
 
+###### add github links?
+
 # See README.txt for details
 rm(list = ls())
 
@@ -43,12 +45,11 @@ lapply(pkg, library, character.only=T)
 ### Setup project
 ##################
 
-# Set path. Change this line to where you have saved the data files.
-# change slashs from \ into /, for example on Windows OS
-prj <- "C:/Users/KP/Dropbox/3.paper_revisions/data"
+# Set path to working directory, where files and history would be stored
+prj <- "~/Desktop/ECOLIND-6908_Voss_Schaefer/data"
 setwd(prj)
 # load data
-parameter <- read.csv(file.path(prj, "variables_final.csv"), sep=";", dec=".", header=T, check.names=F) 
+parameter <- read.csv("https://raw.githubusercontent.com/rbslandau/Function_div/master/variables_final.csv", sep=";", dec=".", header=T, check.names=F) 
 
 ####################
 # 1. Build gradient
@@ -91,36 +92,20 @@ k.max <- 6
 ##  k.max = max number of considered sparse PCs
 oTPO <- opt.TPO(scale(new_par), k.max = k.max, method = "sd")
 
-oTPO$pc
+summary(oTPO$pc)
 # the model selected by opt. TPO
+# first axis captures 41% of variance
+
 oTPO$pc$load     
-# and related sparse loadings
-
-##  Tradeoff Curves: Explained Variance vs. sparseness
-par (mfrow = c (1, k.max))
-for (i in 1:k.max)        plot (oTPO, k = i)
-# L0 gives number of variables with zero loadings on PC
-# lambda opt is the estimated optimal penalty
-# ECV1 is the empirical cumulated variance of the PCs
-
-##  Tradeoff Curves: Explained Variance vs. lambda
-par (mfrow = c (1, k.max))
-for (i in 1:k.max)       plot (oTPO, k = i, f.x = "lambda")
-# lambda represents penalty term
-
-# use optimized lambdas to compute sparsePCA
-spc <- sPCAgrid(scale(new_par), k = k.max, lambda = oTPO$pc.noord$lambda, method = "sd")
-summary(spc)
-# first axis captures 40% of variance
-
-# loadings for Table S4
-unclass (spc$load)
-# first axis captures major part of sparse PCA variance
 # and represents most variables
+# related sparse loadings for Table S4
 
 ##############################
 # Extraction of spc scores    #
 ##############################
+# use optimized lambdas to compute sparsePCA
+spc <- sPCAgrid(scale(new_par), k = k.max, lambda = oTPO$pc.noord$lambda, method = "sd")
+
 load_spca <- scores(spc, choices = 1, display = "species", scaling = 0)
 # write.csv(load_spca, file="Tab_S4.csv")
 # uncomment to save loadings (given in Table S4)
@@ -176,27 +161,21 @@ data$overall_FEve <- fds$FEve
 data$overall_FDiv <- fds$FDiv
 
 ##############################################################################
-## Functional diversity of OMB-related traits (n=2, food and feeding habit)
+## Functional diversity of OMB-related traits (food and feeding habit)
 
-fds_Food <- dbFD(x = prop_trait[, c(47:55)], a = abun, stand.FRic = TRUE)
+fds_Food <- dbFD(x = prop_trait[ , c(48,58)], a = abun, stand.FRic = TRUE)
 str(fds_Food)
 
-data$Food_FRic <- fds_Food$FRic
-data$Food_FEve <- fds_Food$FEve
-data$Food_FDiv <- fds_Food$FDiv
-
-fds_Feeding_habits <- dbFD(x = prop_trait[, c(56:63)], a = abun, stand.FRic = TRUE)
-
-data$FH_FRic <- fds_Feeding_habits$FRic
-data$FH_FEve <- fds_Feeding_habits$FEve
-data$FH_FDiv <- fds_Feeding_habits$FDiv
+data$OMB_FRic <- fds_Food$FRic
+data$OMB_FEve <- fds_Food$FEve
+data$OMB_FDiv <- fds_Food$FDiv
 
 ########################
 #Functional Diversities
 ########################
 
 #extract FD indices
-FD <- data[ ,120:128]
+FD <- data[ ,120:125]
 
 str(FD)
 res <- sapply(FD, function(y) {
@@ -258,7 +237,7 @@ p.adjust(c(m3$p.value, m4$p.value), method= "fdr")
 #Functional Diversities and OMB
 ############################################
 
-res_fd <- sapply(FD[ ,-c(1:3)], function(y) {
+res_fd <- sapply(FD, function(y) {
   test <- cor.test(y, data$OMB, method="pearson")
 })
 
@@ -267,8 +246,8 @@ cor_fd <- res_fd[4, ]
 value_fd <- res_fd[3, ]
 p.adjusted2 <- p.adjust(value_fd, method= "fdr")
 
-#food and feeding habit modalities (n=17) and OMB
-OMB_mod<- modalities[,47:63]
+# OMB relevant food and feeding trait and OMB
+OMB_mod <- modalities[ ,c(48,58)]
 
 res2 <- sapply(OMB_mod, function(y) {
   test <- cor.test(y, data$OMB, method="pearson")
@@ -289,6 +268,7 @@ names(fin_OMB2)[1:2] <- c("Correl_coeff", "p")
 #############################################################
 # 4.  Redundancy Discriminant Analysis for invertebrate taxa#
 #############################################################
+
 taxa <- read.csv(file.path(prj, "inv_taxa_rda.csv"), sep="\t", header=T, check.names=F)
 rownames(taxa) <- taxa[ ,1]
 aggr_taxa <- taxa[-1, ]
@@ -330,7 +310,7 @@ set.seed(111)
 anova.cca(VAR_rda, step=1000, by='term')
 # grad statistically significant 0.038
 
-# order of species along the gradient (RDA 1 axis - constrained variance = 8%)
+# order of species along the gradient (RDA 1 axis - constrained variance = 7%)
 sc  <- vegan::scores(VAR_rda, display = 'species', choices = 1, scaling = "species")
 hist(sc) #most species in the centre, will not be plotted
 par(mfrow=c(1,1))
@@ -341,12 +321,12 @@ linestack(sc[abs(sc) > 0.07], rownames(sc)[abs(sc) > 0.07], axis = TRUE, cex = 1
 # 5.   Redundancy Discriminant Analysis for invertebrate traits #
 #################################################################
 
-#RDA with trait modality data
+# RDA with trait modality data
 modalities_hel <- decostand(modalities, "hellinger") # transformation
 
-#############
-#conduct RDA#
-#############
+##############
+#conduct RDA #
+##############
 
 (mod_rda <- rda(modalities_hel ~ grad))
 # 13% explained by stressor gradient (constrained Proportion 0.127)
@@ -362,41 +342,22 @@ sc1  <- scores(mod_rda, display = 'species', choices = 1)
 
 linestack(sc1[abs(sc1) > .05], rownames(sc1)[abs(sc1) > .05], axis = TRUE, cex = 1.5) 
 
-##############################################
-#conduct RDA for OMB-relevant trait modalities
-
-OMBmod_hel <- decostand(OMB_mod, "hellinger") # transformation
-
-(OMBmod_rda <- rda(OMBmod_hel ~ grad))
-# 8% explained variance
-coef(OMBmod_rda)
-
-set.seed(111)
-anova.cca(OMBmod_rda, step=1000)
-# p = 0.055
-
-# order of OMB-relevant trait modalities along stressor gradient (RDA 1 axis - constrained variance = 13%)
-sc2  <- scores(OMBmod_rda, display = 'species', choices = 1, scaling ="species")
-par(mai=c(0.2,0,0.5,2), cex= 1.5)
-linestack(sc2[abs(sc2) > .01], rownames(sc2)[abs(sc2) > .01], axis = TRUE) 
-
 ######################################
 # Code for figures in article
 #####################################
 
 #Figure 1
 #jpeg('Figure1.jpg', width = 500, height = 150,units = 'mm',res = 600)
-par(mfrow=c(1,4), mai=c(0.8, 0.3, 0.5, 3.6), cex= 1.5)
+par(mfrow=c(1,3), mai=c(0.8, 0.3, 0.5, 3.6), cex= 1.5)
 #a)gradient
 # account for negative relationship with RDA axes - multiply with -1 to have matching directions
 load_spca_n <- load_spca*(-1)
-linestack(load_spca_n[abs(load_spca_n) > 0.00003], rownames(load_spca_n)[abs(load_spca_n) > 0.00003], axis = TRUE, cex =1.1)
+linestack(load_spca_n[abs(load_spca_n) > 0], rownames(load_spca_n)[abs(load_spca_n) > 0], axis = TRUE, cex =1.1)
+
 #b)invertebrates taxa
-linestack(sc[abs(sc) > 0.07], rownames(sc)[abs(sc) > 0.07], axis = TRUE, cex =1.1)#rownames includes species names
+linestack(sc[abs(sc) > 0.03], rownames(sc)[abs(sc) > 0.03], axis = TRUE, cex =1.1)#rownames includes species names
 #c)trait modalities
-linestack(sc1[abs(sc1)>.04], rownames(sc1)[abs(sc1)>.04], axis = TRUE, cex =1.1)
-#d)OMB-relevant trait modalities
-linestack(sc2[abs(sc2) > .01], rownames(sc2)[abs(sc2) > .01], axis = TRUE, cex =1.1)
+linestack(sc1[abs(sc1) > .035], rownames(sc1)[abs(sc1) > .035], axis = TRUE, cex =1.1)
 #dev.off()
 
 #########
