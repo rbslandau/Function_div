@@ -21,13 +21,13 @@
 ## The code has been written for application to the supplied data sets
 
 # Structure of the code:
-# 1 # Gradient building ---------------------------------------------> from line  54 - 135
-# 2 # Diversity metrics and gradient --------------------------------> from line 135 - 242
-# 3 # Diversity metrics and Organic matter breakdown-----------------> from line 242 - 290
-# 4 # Stressor effect on invertertebrate community structure (RDA)---> from line 290 - 341
-# 5 # Stressor effect on community trait structure (RDA) ------------> from line 341 - 384
-# Fig.1 and Fig.2 from the article ----------------------------------> from line 384 - 444
-# Fig. S1 and S2 from Supplementary Informations---------------------> from line 444 - 466
+# 1 # Gradient building ---------------------------------------------
+# 2 # Diversity metrics and gradient --------------------------------
+# 3 # Diversity metrics and Organic matter breakdown-----------------
+# 4 # Stressor effect on invertertebrate community structure (RDA)---
+# 5 # Stressor effect on community trait structure (RDA) ------------
+# Fig.1 and Fig.2 from the article ----------------------------------
+# Fig. S1 and S2 from Supplementary Informations---------------------
 
 ###### add github links?
 
@@ -82,7 +82,6 @@ new_par <- para[ ,-c(3,7:10,26,29,31)]
 
 #### Preparation: Values of broken stick model
 np_pca <- rda(new_par, scale=TRUE)
-library(BiodiversityR)
 bs_temp <- PCAsignificance(np_pca)
 # in classical PCA 6 axes hold more variance than BS model
 
@@ -96,7 +95,7 @@ summary(oTPO$pc)
 # the model selected by opt. TPO
 # first axis captures 41% of variance
 
-oTPO$pc$load     
+oTPO$pc$load*-1    
 # and represents most variables
 # related sparse loadings for Table S4
 
@@ -112,8 +111,8 @@ load_spca <- scores(spc, choices = 1, display = "species", scaling = 0)
 
 # scores will be used as environmental stress gradient in further analysis
 pca_axes <- vegan::scores(spc, disp = "sites", choices=c(1:ncol(new_par)), scaling = "sites")
-# we extract the first axis
-grad <- unlist(pca_axes[ ,1])
+# we extract the first axis, multiplied with -1 to enhance interpretability, see paper
+grad <- unlist(pca_axes[ ,1]) * -1
 # write.csv(pca_axes[,1], file ="stressor gradient")
 
 #####################################################
@@ -122,7 +121,7 @@ grad <- unlist(pca_axes[ ,1])
 
 # load data on taxonomic diversity metrics and relative abundance
 # of each trait modality within the communities
-data <- read.csv(file.path(prj, "diversities.csv"), sep="\t", dec=".", header=T, check.names=F)
+data <- read.csv("https://raw.githubusercontent.com/rbslandau/Function_div/master/diversities.csv", sep="\t", dec=".", header=T, check.names=F)
 str(data)
 
 # relationship between taxonomic diversities (Total taxonomic richness and Simpsons Diversity) and gradient
@@ -145,8 +144,8 @@ p.adjust(c(m1$p.value, m2$p.value), method= "fdr")
 ###########################################################################################################
 
 # load data
-trait<- read.csv(file.path(prj, "ID_traits.csv"), sep= "", header=T) 
-abun <- read.csv(file.path(prj, "ID_abundance.csv"), sep= "", header=T) 
+trait<- read.csv("https://raw.githubusercontent.com/rbslandau/Function_div/master/ID_traits.csv", sep= "", header=T) 
+abun <- read.csv("https://raw.githubusercontent.com/rbslandau/Function_div/master/ID_abundance.csv", sep= "", header=T) 
 
 # calculating proportions of single trait modalities per trait for the fuzzy coded data
 col.blocks <- c(7,2,3,4,8,4,5,5,8,9,8,7,8,3,9,4,3,2,3,5,6)
@@ -159,16 +158,20 @@ str(fds)
 data$overall_FRic <- fds$FRic
 data$overall_FEve <- fds$FEve
 data$overall_FDiv <- fds$FDiv
-
+# uncomment for calculating functional redundancy according to Mouillotet al. 2014. Proceedings of the National Academy of Sciences 111, 13757–13762. doi:10.1073/pnas.1317625111
+# data$overall_FRed <- fds$sing.sp/fds$nbsp
+ 
 ##############################################################################
 ## Functional diversity of OMB-related traits (food and feeding habit)
 
-fds_Food <- dbFD(x = prop_trait[ , c(48,58)], a = abun, stand.FRic = TRUE)
+fds_Food <- dbFD(x = prop_trait[ , c(47:63)], a = abun, stand.FRic = TRUE)
 str(fds_Food)
 
 data$OMB_FRic <- fds_Food$FRic
 data$OMB_FEve <- fds_Food$FEve
 data$OMB_FDiv <- fds_Food$FDiv
+# uncomment for calculating functional redundancy
+# data$OMB_FRed <- fds_Food$sing.sp/fds_Food$nbsp
 
 ########################
 #Functional Diversities
@@ -176,6 +179,8 @@ data$OMB_FDiv <- fds_Food$FDiv
 
 #extract FD indices
 FD <- data[ ,120:125]
+# FD <- data[ ,120:127]
+# uncomment if including functional redundancy
 
 str(FD)
 res <- sapply(FD, function(y) {
@@ -214,6 +219,7 @@ fin_modal <- rbind(unlist(cor1), unlist(p.adjusted_2))
 fin_modal2 <- as.data.frame(t(fin_modal))
 fin_modal2$"Modality" <- row.names(fin_modal2)
 names(fin_modal2)[1:2] <- c("Correl_coeff", "p")
+sum(fin_modal2$p < 0.05, na.rm = TRUE) # sum of significant p values
 # save (cf. Tab. S6)
 # write.csv(fin_modal2, file="cor_modalities_gradient.csv", row.names = F)
 
@@ -247,7 +253,7 @@ value_fd <- res_fd[3, ]
 p.adjusted2 <- p.adjust(value_fd, method= "fdr")
 
 # OMB relevant food and feeding trait and OMB
-OMB_mod <- modalities[ ,c(48,58)]
+OMB_mod <- modalities[ ,c(47:63)]
 
 res2 <- sapply(OMB_mod, function(y) {
   test <- cor.test(y, data$OMB, method="pearson")
@@ -269,7 +275,7 @@ names(fin_OMB2)[1:2] <- c("Correl_coeff", "p")
 # 4.  Redundancy Discriminant Analysis for invertebrate taxa#
 #############################################################
 
-taxa <- read.csv(file.path(prj, "inv_taxa_rda.csv"), sep="\t", header=T, check.names=F)
+taxa <- read.csv("https://raw.githubusercontent.com/rbslandau/Function_div/master/inv_taxa_rda.csv", sep="\t", header=T, check.names=F)
 rownames(taxa) <- taxa[ ,1]
 aggr_taxa <- taxa[-1, ]
 #omit ID's
@@ -371,76 +377,47 @@ par(mfrow=c(2,2),mar=c(4,5,2,2), cex = 1.5)
 plot(grad, data$TTR,ylab= "Invertebrate richness", xlab = "Environmental stress gradient", pch=16, yaxt="n")
 axis(2,las=2)
 # cor.test(data$TTR, grad, method="pearson")
-text(-2,15.5, label=expression(paste("r = 0.55; p = 0.004")), cex=0.85)
+text(2.4, 15.8, label=expression(paste("r = -0.55; p = 0.004")), cex=0.85)
 mtext(text = expression(bold(a)), side = 2, cex=2, las = 1, at = 17, line = 4)
 abline(lm(data$TTR~grad), lwd = 1.7)
 
 # Fig 2b
-plot(data$SD,data$OMB*1000,yaxt="n", pch = 16, ylab= expression(paste(italic("k"), " invertebrates (",  10^-3, dday^-1,")")), xlab = "Invertebrate Simpson Diversity")
+plot(data$SD,data$OMB * 1000,yaxt="n", pch = 16, ylab= expression(paste(italic("k"), " invertebrates (",  10^-3, dday^-1,")")), xlab = "Invertebrate Simpson Diversity")
 axis(2,las=2)
-# cor.test(data$SD,data$OMB,method = c("pearson"))
-text(2.5,5, label=expression(paste("r = -0.41, p = 0.06")), cex=0.85)  
+cor.test(data$SD,data$OMB,method = c("pearson"))
+text(4.5, 5.5, label=expression(paste("r = -0.41, p = 0.06")), cex=0.85)  
 mtext(text = expression(bold(b)), side = 2, cex=2, las =1, at = 6.3, line = 4)
 abline(lm((data$OMB*1000) ~ data$SD), lwd = 1.7)
 
 # Fig.2c
-plot(FD$FH_FEve, data$OMB*1000, ylab= expression(paste(italic("k"), " invertebrates (",  10^-3, dday^-1,")")), xlab = "Functional Evenness - Feeding habit", pch=16, yaxt="n")
+plot(grad, data$rel.Gam.Abu, yaxt="n", pch = 16, ylab= "Relative Gammarid abundance", xlab ="Environmental stress gradient")
 axis(2,las=2)
-#cor.test(FD$FH_FEve,data$OMB, method="pearson")
-text(0.35,5.6, label=expression(paste("r = -0.5; p = 0.03")), cex=0.85)
-mtext(text = expression(bold(c)), side = 2, cex=2, las =1, at = 6.3, line = 4)
-abline(lm(data$OMB*1000 ~FD$FH_FEve), lwd = 1.7)
+# cor.test(grad, data$rel.Gam.Abu, method="pearson")
+mtext(text = expression(bold(c)), side = 2, cex=2, las =1, at = 110, line = 4)
 
 #Fig 2d
-plot(data$SD, FD$FH_FEve, ylab= "Functional Evenness - Feeding habit", xlab = "Invertebrate Simpson Diversity", pch=16,yaxt="n")
+plot(data$Gam.Ab, data$OMB*1000, yaxt="n", pch = 16, ylab= expression(paste(italic("k"), " invertebrates (",  10^-3, dday^-1,")")), xlab = "Number of Gammarids")
 axis(2,las=2)
-# cor.test(FD$FH_FEve,data$SD, method="pearson")
-text(2.5,0.8, label=expression(paste("r = 0.44; p = 0.02")), cex=0.85)
-mtext(text = expression(bold(d)), side = 2, cex=2, las =1, at = 0.9, line = 4)
-abline(lm(FD$FH_FEve~data$SD), lwd = 1.7)
+cor.test(data$Gam.Ab, data$OMB*1000, method = c("pearson"))
+text(200, 5.5, label=expression(paste("r = 0.48, p = 0.01")), cex = 0.85)  
+mtext(text = expression(bold(d)), side = 2, cex=2, las =1, at = 6.4, line = 4)
+abline(lm(data$OMB * 1000 ~ data$Gam.Ab), lwd = 1.7)
 
 dev.off()
 
-##########################################################################
+############################
 #Supplementary information
 ############################
 
 #jpeg("Fig. S1.jpg",width = 230, height = 230,units = 'mm',res = 600)
 
-par(mfrow=c(2,2),mar=c(4,5,2,2), cex = 1.5)
+par(mar=c(4,5,2,2), cex = 1.5)
 
-#Fig. S1a
+#Fig. A1
 plot(data$Gam.Ab, data$SD, yaxt="n", pch = 16, ylab= "Invertebrate Simpson Diversity", xlab ="Number of Gammarids")
 axis(2, las=2)
 cor.test(data$SD, data$Gam.Ab, method = c("pearson"))
 text(200,5.2, label=expression(paste("r = -0.37, p = 0.045")), cex=1)  
-mtext(text = expression(bold(a)), side = 2, cex=2, las = 1, at = 6.2, line = 4)
-abline(lm(data$SD~data$Gam.Ab), lwd = 1.7)
-
-#Fig. S1b
-plot(data$Gam.Ab, data$OMB*1000, yaxt="n", pch = 16, ylab= expression(paste(italic("k"), " invertebrates (",  10^-3, dday^-1,")")), xlab = "Number of Gammarids")
-axis(2,las=2)
-cor.test(data$Gam.Ab, data$OMB*1000, method = c("pearson"))
-text(200, 5.2, label=expression(paste("r = 0.48, p = 0.01")), cex=1)  
-mtext(text = expression(bold(b)), side = 2, cex=2, las = 1, at = 6.4, line = 4)
-abline(lm(data$OMB*1000~data$Gam.Ab), lwd = 1.7)
-
-#Fig.S1c
-plot(data$Gam.Ab, FD$FH_FEve, yaxt="n", pch = 16, ylab= "Funct. Evenness - Feeding habit", xlab = "Number of Gammarids")
-axis(2, las=2)
-cor.test(data$Gam.Ab, FD$FH_FEve, method = c("pearson"))
-text(450, 0.7, label=expression(paste("r = -0.5, p = 0.006")), cex=1)  
-mtext(text = expression(bold(c)), side = 2, cex=2, las = 1, at = 0.92, line = 4)
-abline(lm(FD$FH_FEve~data$Gam.Ab), lwd = 1.7)
-
-#dev.off()
-
-########
-#jpeg("Fig.S2.jpg",width = 115, height = 115,units = 'mm',res = 600)
-
-par(mfrow=c(1,1),mar=c(5,5,4,2), cex = 1.5)
-
-plot(grad,data$rel.Gam.Abu,yaxt="n", pch = 16, ylab= "Relative Gammarid abundance", xlab ="Environmental stress gradient")
-axis(2,las=2)
+abline(lm(data$SD ~ data$Gam.Ab), lwd = 1.7)
 
 #dev.off()
