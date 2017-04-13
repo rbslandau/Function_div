@@ -144,11 +144,11 @@ p.adjust(c(m1$p.value, m2$p.value), method= "fdr")
 ###########################################################################################################
 
 # load data
-trait<- read.csv("https://raw.githubusercontent.com/rbslandau/Function_div/master/ID_traits.csv", sep= "", header=T) 
+trait <- read.csv("https://raw.githubusercontent.com/rbslandau/Function_div/master/ID_traits.csv", sep= "", header=T, as.is =TRUE) 
 abun <- read.csv("https://raw.githubusercontent.com/rbslandau/Function_div/master/ID_abundance.csv", sep= "", header=T) 
 
 # calculating proportions of single trait modalities per trait for the fuzzy coded data
-col.blocks <- c(7,2,3,4,8,4,5,5,8,9,8,7,8,3,9,4,3,2,3,5,6)
+col.blocks <- c(7,2,3,4,8,4, 5,5,8,9,8,7,8,3,9,4,3,2,3,5,6)
 prop_trait <- prep.fuzzy.var(trait, col.blocks, row.w = rep(1, nrow(trait)))
 # write.csv(prep.fuzzy.var(trait, col.blocks, row.w = rep(1, nrow(trait))))#, file = "prop_traits.csv")
 
@@ -160,6 +160,13 @@ data$overall_FEve <- fds$FEve
 data$overall_FDiv <- fds$FDiv
 # uncomment for calculating functional redundancy according to Mouillotet al. 2014. Proceedings of the National Academy of Sciences 111, 13757–13762. doi:10.1073/pnas.1317625111
 # data$overall_FRed <- fds$sing.sp/fds$nbsp
+ 
+# some modalities have been converted to factors
+# because all values are 0
+# replace with 0
+modalities <- fds$CWM
+temp_facmod <- sapply(modalities,is.factor)
+modalities[ ,temp_facmod] <- 0  
  
 ##############################################################################
 ## Functional diversity of OMB-related traits (food and feeding habit)
@@ -203,8 +210,6 @@ names(fin_FD2)[1:2] <- c("Correl_coeff", "p_adjusted")
 ######################################################################
 
 # extract trait modalities
-modalities <- data[ ,c(7:119)]
-
 str(modalities)
 
 res1 <- sapply(modalities, function(y) {
@@ -222,6 +227,19 @@ names(fin_modal2)[1:2] <- c("Correl_coeff", "p")
 sum(fin_modal2$p < 0.05, na.rm = TRUE) # sum of significant p values
 # save (cf. Tab. S6)
 # write.csv(fin_modal2, file="cor_modalities_gradient.csv", row.names = F)
+
+# summary of variation in both OMB-related traits
+summary(fds$CWM$t10.3)
+summary(fds$CWM$t11.3)
+# mean and standard deviation
+mean(fds$CWM$t10.3)
+sd(fds$CWM$t10.3) 
+# mean and standard deviation
+mean(fds$CWM$t11.3)
+sd(fds$CWM$t11.3) 
+
+# computation of total trait abundance per site
+trait_abun_matx <- as.matrix(abun) %*% as.matrix(prop_trait)
 
 ############################################################
 ## 3.  Diversity metrics and Organic matter breakdown (OMB)
@@ -270,6 +288,10 @@ names(fin_OMB2)[1:2] <- c("Correl_coeff", "p")
 
 # save (cf. Tab.S7)
 # write.csv(fin_OMB2, file="cor_OMBmod_OMB.csv", row.names=F)
+
+# check summed abundance for specific modalities 
+<- cor.test(trait_abun_matx[ ,"t10.3"], data$OMB)
+<- cor.test(trait_abun_matx[ ,"t11.3"], data$OMB)
 
 #############################################################
 # 4.  Redundancy Discriminant Analysis for invertebrate taxa#
@@ -334,7 +356,7 @@ modalities_hel <- decostand(modalities, "hellinger") # transformation
 #conduct RDA #
 ##############
 
-(mod_rda <- rda(modalities_hel ~ grad))
+(mod_rda <- rda(modalities ~ grad))
 # 13% explained by stressor gradient (constrained Proportion 0.127)
 
 coef(mod_rda)
