@@ -27,7 +27,7 @@
 # 4 # Stressor effect on community trait structure (RDA) ------------
 # 5 # Diversity metrics and Organic matter breakdown-----------------
 # Fig.1 and Fig.2 from the article ----------------------------------
-# Fig. S1 and S2 from Supplementary Informations---------------------
+# Fig. A1 and A2 from Supplementary Informations---------------------
 # See README.txt for details
 
 # Set path to working directory, where files and history is stored
@@ -159,7 +159,6 @@ p.adjust(c(m1$p.value, m2$p.value), method= "fdr")
 
 # recalculate SD downweighing dominant taxa
 SD_dw <- diversity(sqrt(abun), index = "invsimpson", MARGIN = 1)
-
 (m2_1 <- cor.test(SD_dw, grad))
 
 # identify dominant species
@@ -172,6 +171,7 @@ sort(tot_abun_spec)
 tot_gam <- rowSums(taxa_new[ ,names(taxa_new) %in% c("Gammarus roeseli", "Gammarus fossarum", "Gammarus pulex")])
 tot_abun <- rowSums(taxa_new)
 frac_gam <- tot_gam/tot_abun
+summary(frac_gam)
 # gammarids abundance > 50% in 75% of sites, median: 79%
 
 ###########################################################################################################
@@ -280,12 +280,11 @@ taxa_new$"Philopotamus spec." <- rowSums(taxa_new[ ,pos_phil])
 taxa_new$"Ptychoptera spec." <- rowSums(taxa_new[ ,pos_ptych])
 taxa_new$"Rhyacophila spec." <- rowSums(taxa_new[ ,pos_rhya])
 
-# remove aggregated taxa and site information
+# remove aggregated taxa
 varetaxa <- taxa_new[ ,-c(pos_cord, pos_phil, pos_ptych, pos_rhya)]
-varetaxa <- aggr_taxa
+
 # We employ the hellinger transformation to use RDA with ecological data 
 # see Legendre, P., Gallagher, E.D., 2001. Ecologically meaningful transformations for ordination of species data. Oecologia 129, 271–280.
-
 varetaxa_hel <- decostand(varetaxa, "hellinger")
 
 #############
@@ -384,6 +383,7 @@ p.adjust(c(m7$p.value, m8$p.value), method= "fdr")
 #Figure 1
 #jpeg('Figure1.jpg', width = 500, height = 150,units = 'mm',res = 600)
 par(mfrow=c(1,3), mai=c(0.8, 0.3, 0.5, 3.6), cex= 1.5)
+
 #a)gradient
 # account for negative relationship with RDA axes - multiply with -1 to have matching directions
 load_spca_n <- load_spca*(-1)
@@ -391,6 +391,7 @@ linestack(load_spca_n[abs(load_spca_n) > 0], rownames(load_spca_n)[abs(load_spca
 
 #b)invertebrates taxa
 linestack(sc[abs(sc) > 0.03], rownames(sc)[abs(sc) > 0.03], axis = TRUE, cex =1.1)#rownames includes species names
+
 #c)trait modalities
 linestack(sc1[abs(sc1) > .041], trait_labels[abs(sc1) > .041], axis = TRUE, cex =1.1)
 #dev.off()
@@ -403,34 +404,35 @@ linestack(sc1[abs(sc1) > .041], trait_labels[abs(sc1) > .041], axis = TRUE, cex 
 par(mfrow=c(2,2),mar=c(4,5,2,2), cex = 1.5)
 
 # Fig.2a
-plot(grad, data$TTR,ylab= "Invertebrate richness", xlab = "Environmental stress gradient", pch=16, yaxt="n")
+plot(grad, TTR, ylab= "Invertebrate richness", xlab = "Environmental stress gradient", pch=16, yaxt="n")
 axis(2,las=2)
 # cor.test(data$TTR, grad, method="pearson")
-text(2.4, 15.8, label=expression(paste("r = -0.55; p = 0.004")), cex=0.85)
+text(2.2, 15.2, label=expression(paste("r = -0.55; adj. p = 0.004")), cex=0.85)
 mtext(text = expression(bold(a)), side = 2, cex=2, las = 1, at = 17, line = 4)
-abline(lm(data$TTR~grad), lwd = 1.7)
+abline(lm(TTR~grad), lwd = 1.7)
 
-# Fig 2b
-plot(data$SD,data$OMB * 1000,yaxt="n", pch = 16, ylab= expression(paste(italic("k"), " invertebrates (",  10^-3, dday^-1,")")), xlab = "Invertebrate Simpson Diversity")
+# Fig.2b
+plot(grad, FD$overall_FRic, yaxt="n", pch = 16, ylab= "Functional richness", xlab ="Environmental stress gradient")
 axis(2,las=2)
-cor.test(data$SD,data$OMB,method = c("pearson"))
-text(4.5, 5.5, label=expression(paste("r = -0.41, p = 0.06")), cex=0.85)  
-mtext(text = expression(bold(b)), side = 2, cex=2, las =1, at = 6.3, line = 4)
-abline(lm((data$OMB*1000) ~ data$SD), lwd = 1.7)
+text(2.2, 0.45, label=expression(paste("r = -0.41; adj. p = 0.15")), cex=0.85)
+mtext(text = expression(bold(b)), side = 2, cex=2, las =1, at = 0.55, line = 4)
+abline(lm(FD$overall_FRic ~ grad), lwd = 1.7)
 
-# Fig.2c
-plot(grad, data$rel.Gam.Abu, yaxt="n", pch = 16, ylab= "Relative Gammarid abundance", xlab ="Environmental stress gradient")
+# Fig 2c
+plot(SD, omb_dat$OMB * 1000,yaxt="n", pch = 16, ylab= expression(paste(italic("k"), " invertebrates (",  10^-3, dday^-1,")")), xlab = "Invertebrate Simpson Diversity")
 axis(2,las=2)
-# cor.test(grad, data$rel.Gam.Abu, method="pearson")
-mtext(text = expression(bold(c)), side = 2, cex=2, las =1, at = 110, line = 4)
+# cor.test(SD, omb_dat$OMB, method = c("pearson"))
+text(4.5, 5.5, label=expression(paste("r = -0.41, adj. p = 0.06")), cex=0.85)  
+mtext(text = expression(bold(c)), side = 2, cex=2, las =1, at = 6.3, line = 4)
+abline(lm((omb_dat$OMB*1000) ~ SD), lwd = 1.7)
 
 #Fig 2d
-plot(data$Gam.Ab, data$OMB*1000, yaxt="n", pch = 16, ylab= expression(paste(italic("k"), " invertebrates (",  10^-3, dday^-1,")")), xlab = "Number of Gammarids")
+plot(tot_gam, omb_dat$OMB*1000, yaxt="n", pch = 16, ylab= expression(paste(italic("k"), " invertebrates (",  10^-3, dday^-1,")")), xlab = "Number of Gammarids")
 axis(2,las=2)
-cor.test(data$Gam.Ab, data$OMB*1000, method = c("pearson"))
-text(200, 5.5, label=expression(paste("r = 0.48, p = 0.01")), cex = 0.85)  
+cor.test(tot_gam, omb_dat$OMB*1000, method = c("pearson"))
+text(200, 5.5, label=expression(paste("r = 0.48, adj. p = 0.01")), cex = 0.85)  
 mtext(text = expression(bold(d)), side = 2, cex=2, las =1, at = 6.4, line = 4)
-abline(lm(data$OMB * 1000 ~ data$Gam.Ab), lwd = 1.7)
+abline(lm(omb_dat$OMB * 1000 ~ tot_gam), lwd = 1.7)
 
 dev.off()
 
@@ -443,10 +445,24 @@ dev.off()
 par(mar=c(4,5,2,2), cex = 1.5)
 
 #Fig. A1
-plot(data$Gam.Ab, data$SD, yaxt="n", pch = 16, ylab= "Invertebrate Simpson Diversity", xlab ="Number of Gammarids")
+plot(grad, SD_dw, yaxt="n", pch = 16, ylab= "Invertebrate Simpson Diversity", xlab ="Environmental stress gradient")
 axis(2, las=2)
-cor.test(data$SD, data$Gam.Ab, method = c("pearson"))
-text(200,5.2, label=expression(paste("r = -0.37, p = 0.045")), cex=1)  
-abline(lm(data$SD ~ data$Gam.Ab), lwd = 1.7)
+cor.test(SD_dw, grad)
+text( 2.2, 10, label=expression(paste("r = -0.45, p = 0.01")), cex=1)  
+abline(lm(SD_dw ~ grad), lwd = 1.7)
 
 #dev.off()
+
+#Fig. A2
+par(mfrow=c(1,2),mar=c(4,5,2,2), cex = 1.5)
+plot(trait_abun_matx[ ,"t10.3"], omb_dat$OMB * 1000,yaxt="n", pch = 16, ylab= expression(paste(italic("k"), " invertebrates (",  10^-3, dday^-1,")")), xlab = "Food: Dead plant \n - Community trait abundance")
+axis(2, las=2)
+text(60, 5.5, label=expression(paste("r = 0.46, adj. p = 0.01")), cex=0.85)  
+mtext(text = expression(bold(a)), side = 2, cex=2, las =1, at = 6.3, line = 4)
+abline(lm((omb_dat$OMB*1000) ~ trait_abun_matx[ ,"t10.3"]), lwd = 1.7)
+
+plot(trait_abun_matx[ ,"t11.3"], omb_dat$OMB * 1000,yaxt="n", pch = 16, ylab= expression(paste(italic("k"), " invertebrates (",  10^-3, dday^-1,")")), xlab = "Feeding habit: Shredder \n - Community trait abundance")
+axis(2, las=2)
+text(150, 5.5, label=expression(paste("r = 0.46, adj. p = 0.01")), cex=0.85)  
+mtext(text = expression(bold(b)), side = 2, cex=2, las =1, at = 6.3, line = 4)
+abline(lm((omb_dat$OMB*1000) ~ trait_abun_matx[ ,"t11.3"]), lwd = 1.7)
