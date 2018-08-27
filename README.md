@@ -1,7 +1,7 @@
 Repo for the publication "Taxonomic and functional diversity of stream invertebrates along an environmental stress gradient"
 ====================================================================================================================
 
-This repo contains the script and data for the related publication in Ecological Indicators 81: 235-242 (2017)
+This repo contains the script and data for the related publication in [Ecological Indicators 81: 235-242 (2017)](http://www.sciencedirect.com/science/article/pii/S1470160X17303412)
 
 Scripts written by Katharina Voss and Ralf B. Schäfer
   
