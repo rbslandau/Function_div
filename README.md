@@ -1,14 +1,14 @@
 Repo for the publication "Taxonomic and functional diversity of stream invertebrates along an environmental stress gradient"
 ====================================================================================================================
 
-This repo contains the script and data for the related publication under review
+This repo contains the script and data for the related publication in Ecological Indicators 81: 235-242 (2017)
 
-Scripts written by Katharina Voß and Ralf B. Schäfer
+Scripts written by Katharina Voss and Ralf B. Schäfer
   
 
 ## Description of material ##
 
-ECOLIND\_6908\_script.R:			 *Provides the R code to run the analyses and to plot the results.*  
+ECOLIND_6908_script.R:			 *Provides the R code to run the analyses and to plot the results.*  
 
 ID_abundance.csv:				*Abundance of species in sites*   
 
